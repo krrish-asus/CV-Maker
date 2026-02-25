@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Killer CV Builder</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f3f4f6;
+            --paper: #ffffff;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            color: var(--text);
+        }
+
+        /* LEFT PANEL: EDITOR */
+        .editor-panel {
+            width: 40%;
+            padding: 20px;
+            background: white;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        h2 { margin-top: 0; color: var(--primary); }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        textarea { height: 80px; resize: vertical; }
+
+        .jd-section {
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #bfdbfe;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background: #1d4ed8; }
+
+        /* ATS SCORE DISPLAY */
+        #ats-score {
+            margin-top: 10px;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 4px;
+            display: none;
+        }
+        .score-high { background: #dcfce7; color: #166534; }
+        .score-low { background: #fee2e2; color: #991b1b; }
+
+        /* RIGHT PANEL: PREVIEW */
+        .preview-panel {
+            width: 60%;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            background: #525659;
+            overflow-y: auto;
+        }
+
+        /* THE RESUME PAPER (ATS OPTIMIZED) */
+        .resume-paper {
+            background: white;
+            width: 210mm; /* A4 Width */
+            min-height: 297mm; /* A4 Height */
+            padding: 20mm;
+            box-sizing: border-box;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            
+            /* ATS SAFE STYLING */
+            font-family: Arial, Helvetica, sans-serif; /* Standard fonts only */
+            color: #000;
+            font-size: 11pt;
+            line-height: 1.4;
+        }
+
+        /* Resume Typography */
+        .resume-header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+        .resume-name { font-size: 18pt; font-weight: bold; text-transform: uppercase; }
+        .resume-contact { font-size: 10pt; margin-top: 5px; }
+        
+        .resume-section { margin-bottom: 15px; }
+        .resume-section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 8px;
+            padding-bottom: 2px;
+        }
+
+        .resume-item { margin-bottom: 10px; }
+        .item-header { display: flex; justify-content: space-between; font-weight: bold; }
+        .item-sub { font-style: italic; font-size: 10pt; }
+        .item-content { margin-top: 3px; font-size: 10pt; }
+        
+        /* Highlight class for JS keyword matching */
+        .keyword-match { background-color: #86efac; padding: 0 2px; }
+
+        /* PRINT STYLES */
+        @media print {
+            body { background: white; display: block; height: auto; }
+            .editor-panel { display: none; }
+            .preview-panel { width: 100%; padding: 0; background: white; overflow: visible; }
+            .resume-paper { box-shadow: none; margin: 0; width: 100%; padding: 0; }
+            /* Ensure background colors print if user adds them, though pure B&W is safer */
+            * { -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- EDITOR SIDE -->
+    <div class="editor-panel">
+        <h2>1. Build Your CV</h2>
+        
+        <div class="jd-section">
+            <label for="jobDescription">🔎 Paste Job Description Here</label>
+            <textarea id="jobDescription" placeholder="Paste the job listing here to check keyword match..."></textarea>
+            <button type="button" onclick="checkKeywords()" style="margin-top:5px; background:#059669;">Check Keyword Match</button>
+            <div id="ats-score"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="inpName" placeholder="JOHN DOE" oninput="updateCV()">
+        </div>
+        <div class="form-group">
+            <label>Job Title</label>
+            <input type="text" id="inpTitle" placeholder="Software Engineer" oninput="updateCV()">
+        </div>
+        <div class="form-group">
+            <label>Contact Info (Email | Phone | Location)</label>
+            <input type="text" id="inpContact" placeholder="john@example.com | 555-0199 | New York" oninput="updateCV()">
+        </div>
+
+        <div class="form-group">
+            <label>Professional Summary</label>
+            <textarea id="inpSummary" oninput="updateCV()"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Experience (Role, Company, Date, Description)</label>
+            <textarea id="inpExp" oninput="updateCV()"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Education</label>
+            <textarea id="inpEdu" oninput="updateCV()"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Skills (Comma separated)</label>
+            <textarea id="inpSkills" oninput="updateCV()"></textarea>
+        </div>
+
+        <hr>
+        <button onclick="window.print()">🖨️ Download PDF / Print</button>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">
+            <strong>Pro Tip:</strong> When printing, choose "Save as PDF". Ensure "Background Graphics" is unchecked for a cleaner text-only look, or checked if you want to keep bullet formatting.
+        </p>
+    </div>
+
+    <!-- PREVIEW SIDE -->
+    <div class="preview-panel">
+        <div class="resume-paper" id="resumeContent">
+            
+            <div class="resume-header">
+                <div class="resume-name" id="outName">YOUR NAME</div>
+                <div class="resume-contact" id="outTitle">JOB TITLE</div>
+                <div class="resume-contact" id="outContact">Email | Phone | Location</div>
+            </div>
+
+            <div class="resume-section">
+                <div class="resume-section-title">Summary</div>
+                <div class="item-content" id="outSummary">A dedicated professional with proven experience...</div>
+            </div>
+
+            <div class="resume-section">
+                <div class="resume-section-title">Experience</div>
+                <div id="outExp">
+                    <div class="item-header"><span>Job Title</span><span>Date</span></div>
+                    <div class="item-sub">Company Name</div>
+                    <div class="item-content">
+                        - Use bullet points (•) to start lines.<br>
+                        - Focus on achievements and metrics.<br>
+                        - Keep formatting simple.
+                    </div>
+                </div>
+            </div>
+
+            <div class="resume-section">
+                <div class="resume-section-title">Education</div>
+                <div class="item-content" id="outEdu">
+                    Degree - University Name - Year
+                </div>
+            </div>
+
+            <div class="resume-section">
+                <div class="resume-section-title">Skills</div>
+                <div class="item-content" id="outSkills">
+                    Skill One, Skill Two, Skill Three
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 1. LIVE UPDATE LOGIC
+        function updateCV() {
+            // Get values
+            const name = document.getElementById('inpName').value;
+            const title = document.getElementById('inpTitle').value;
+            const contact = document.getElementById('inpContact').value;
+            const summary = document.getElementById('inpSummary').value;
+            const skills = document.getElementById('inpSkills').value;
+            const edu = document.getElementById('inpEdu').value;
+            const exp = document.getElementById('inpExp').value;
+
+            // Set values to preview
+            document.getElementById('outName').innerText = name || "YOUR NAME";
+            document.getElementById('outTitle').innerText = title || "JOB TITLE";
